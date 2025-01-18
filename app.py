@@ -49,7 +49,8 @@ def login():
         user = User.query.filter_by(username=username).first()
         if user and check_password_hash(user.password, password):
             session['user_id'] = user.id
-            return redirect(url_for('index'))
+            session['role'] = user.role  # Store user role in session
+            return redirect(url_for('index'))  # After successful login, redirect to index
         else:
             flash('Login failed. Check your username and password.')
     return render_template('login.html')
@@ -57,6 +58,7 @@ def login():
 @app.route('/logout')
 def logout():
     session.pop('user_id', None)
+    session.pop('role', None)  # Ensure the role is also cleared from the session
     return redirect(url_for('login'))
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -65,7 +67,7 @@ def register():
         username = request.form['username']
         password = generate_password_hash(request.form['password'])
         role = 'admin' if 'role_admin' in request.form else 'employee'
-        
+
         existing_user = User.query.filter_by(username=username).first()
         if existing_user:
             flash('Username already exists.')
@@ -75,7 +77,7 @@ def register():
             db.session.commit()
             flash('Registration successful! You can now log in.')
             return redirect(url_for('login'))
-    
+
     return render_template('register.html')
 
 @app.route('/add_shift', methods=['GET', 'POST'])
@@ -84,7 +86,7 @@ def add_shift():
         employee_name = request.form['employee_name']
         shift_type = request.form['shift_type']
         date = request.form['date']
-        
+
         # Prevent double-booking
         existing_shift = Shift.query.filter_by(employee_name=employee_name, date=date).first()
         if existing_shift:
@@ -95,7 +97,7 @@ def add_shift():
             db.session.add(new_shift)
             db.session.commit()
             return redirect(url_for('index'))
-    
+
     return render_template('add_shift.html', shift_types=SHIFT_TYPES.keys())
 
 @app.route('/edit_shift/<int:id>', methods=['GET', 'POST'])
@@ -108,7 +110,7 @@ def edit_shift(id):
         shift.shift_time = SHIFT_TYPES[shift.shift_type]['start'] + ' - ' + SHIFT_TYPES[shift.shift_type]['end']
         db.session.commit()
         return redirect(url_for('index'))
-    
+
     return render_template('edit_shift.html', shift=shift, shift_types=SHIFT_TYPES.keys())
 
 @app.route('/delete_shift/<int:id>')

@@ -3,9 +3,8 @@
 {% block content %}
 <h1>Shift Roster</h1>
 {% if session['role'] == 'admin' %}
-    <a href="{{ url_for('export_shifts') }}" class="btn btn-warning mb-3">Export Shifts</a>
+    <a href="{{ url_for('add_shift') }}" class="btn btn-primary mb-3">Add Shift</a>
 {% endif %}
-<a href="{{ url_for('add_shift') }}" class="btn btn-primary mb-3">Add Shift</a>
 <a href="{{ url_for('logout') }}" class="btn btn-danger mb-3">Logout</a>
 
 <h2>Shifts</h2>
