@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Add Shift</h2>
+<form method="POST">
+    <div class="form-group">
+        <label>Employee Name:</label>
+        <input type="text" name="employee_name" class="form-control" required>
+    </div>
+    <div class="form-group">
+        <label>Shift Time:</label>
+        <input type="text" name="shift_time" class="form-control" required>
+    </div>
+    <div class="form-group">
+        <label>Date:</label>
+        <input type="date" name="date" class="form-control" required>
+    </div>
+    <button type="submit" class="btn btn-success mt-3">Add Shift</button>
+</form>
+{% endblock %}
+

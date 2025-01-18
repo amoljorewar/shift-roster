@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Shift Roster</h1>
+{% if session['role'] == 'admin' %}
+    <a href="{{ url_for('export_shifts') }}" class="btn btn-warning mb-3">Export Shifts</a>
+{% endif %}
+<a href="{{ url_for('add_shift') }}" class="btn btn-primary mb-3">Add Shift</a>
+<a href="{{ url_for('logout') }}" class="btn btn-danger mb-3">Logout</a>
+
+<h2>Shifts</h2>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Employee Name</th>
+            <th>Shift Time</th>
+            <th>Date</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for shift in shifts %}
+            <tr>
+                <td>{{ shift.employee_name }}</td>
+                <td>{{ shift.shift_time }}</td>
+                <td>{{ shift.date }}</td>
+                <td>
+                    <a href="{{ url_for('edit_shift', id=shift.id) }}" class="btn btn-warning btn-sm">Edit</a>
+                    <a href="{{ url_for('delete_shift', id=shift.id) }}" class="btn btn-danger btn-sm">Delete</a>
+                </td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
+
