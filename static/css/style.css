@@ -1,0 +1,88 @@
+/* General body styling */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f8f9fa;
+    color: #343a40;
+}
+
+/* Container for the main content */
+.container {
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+/* Navigation bar styling */
+nav {
+    background-color: #007bff;
+    padding: 10px;
+}
+
+nav ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+}
+
+nav li {
+    margin-right: 20px;
+}
+
+nav a {
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+nav a:hover {
+    text-decoration: underline;
+}
+
+/* Flash message styling */
+.flash-messages p {
+    color: red;
+    font-weight: bold;
+    padding: 10px;
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    border-radius: 5px;
+}
+
+/* Form controls styling */
+.form-control {
+    border-radius: 5px;
+}
+
+/* Styling for the submit buttons */
+button.btn {
+    border-radius: 5px;
+    padding: 10px 15px;
+    font-size: 1rem;
+}
+
+/* Hover effect for buttons */
+button.btn:hover {
+    opacity: 0.8;
+}
+
+/* Table styling */
+table {
+    width: 100%;
+    margin-top: 20px;
+}
+
+table th, table td {
+    text-align: center;
+    padding: 10px;
+    border: 1px solid #ddd;
+}
+
+table th {
+    background-color: #007bff;
+    color: white;
+}
+
+table tbody tr:hover {
+    background-color: #f1f1f1;
+}
+

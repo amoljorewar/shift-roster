@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>Edit Shift</h1>
+    <form method="POST">
+        <div>
+            <label for="employee_name">Employee Name</label>
+            <input type="text" id="employee_name" name="employee_name" value="{{ shift.employee_name }}" required>
+        </div>
+        <div>
+            <label for="shift_type">Shift Type</label>
+            <select name="shift_type" id="shift_type" required>
+                {% for shift_type in shift_types %}
+                    <option value="{{ shift_type }}" {% if shift_type == shift.shift_type %} selected {% endif %}>{{ shift_type }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label for="date">Date</label>
+            <input type="date" id="date" name="date" value="{{ shift.date }}" required>
+        </div>
+        <button type="submit">Save</button>
+    </form>
+{% endblock %}
+

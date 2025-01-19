@@ -108,7 +108,9 @@ def edit_shift(id):
         shift.shift_type = request.form['shift_type']
         shift.date = request.form['date']
         shift.shift_time = SHIFT_TYPES[shift.shift_type]['start'] + ' - ' + SHIFT_TYPES[shift.shift_type]['end']
+        
         db.session.commit()
+        flash('Shift updated successfully!')
         return redirect(url_for('index'))
 
     return render_template('edit_shift.html', shift=shift, shift_types=SHIFT_TYPES.keys())
@@ -118,6 +120,7 @@ def delete_shift(id):
     shift = Shift.query.get(id)
     db.session.delete(shift)
     db.session.commit()
+    flash('Shift deleted successfully!')
     return redirect(url_for('index'))
 
 # Show shift roster in calendar view
