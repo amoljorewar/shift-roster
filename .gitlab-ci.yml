@@ -62,7 +62,7 @@ build_image:
 
 
 tag_previous_image:
-  stage: deploy
+  stage: tag
   image: docker:20.10
   services:
     - docker:dind
