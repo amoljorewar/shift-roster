@@ -70,10 +70,12 @@ tag_previous_image:
     DOCKER_TLS_CERTDIR: ""
     DOCKER_HOST: "tcp://docker:2375"
   script:
-    # Ensure variables are available
-    - echo "DOCKER_USERNAME:"| echo "$DOCKER_USERNAME"
-    - echo "DOCKER_PASSWORD:"| echo "$DOCKER_PASSWORD"
-    
+    # Debugging to ensure that the environment variables are properly set and decrypted
+    - echo "DOCKER_USERNAME starts with:" 
+    - echo "${DOCKER_USERNAME:0:5}"  # Debug line
+    - echo "DOCKER_PASSWORD starts with:"
+    - echo "${DOCKER_PASSWORD:0:5}"  # Debug line
+
     # Perform Docker login with username and password
     - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
     
@@ -85,8 +87,6 @@ tag_previous_image:
         docker tag $IMAGE_NAME:$PREVIOUS_TAG $IMAGE_NAME:$NEW_VERSIONED_TAG;
         docker push $IMAGE_NAME:$NEW_VERSIONED_TAG;
       fi
-
-
 
 
 push_images:
