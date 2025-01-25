@@ -85,6 +85,7 @@ tag_previous_image:
 
 push_images:
   stage: push
+  image: docker:20.10  # Make sure the Docker CLI is available in this stage
   dependencies:
     - determine_tags
     - build_image
