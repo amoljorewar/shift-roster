@@ -60,7 +60,6 @@ build_image:
     paths:
       - .latest_tag
 
-
 tag_previous_image:
   stage: tag
   image: docker:20.10
@@ -71,7 +70,7 @@ tag_previous_image:
     DOCKER_HOST: "tcp://docker:2375"
   script:
     # Use GitLab registry credentials for login
-    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" "$CI_REGISTRY" --password-stdin || { echo 'Login failed'; exit 1; }
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" "$DOCKER_REGISTRY" --password-stdin || { echo 'Login failed'; exit 1; }
 
     # Re-tagging and pushing the image
     - PREVIOUS_TAG=$(cat .previous_tag)
@@ -83,7 +82,6 @@ tag_previous_image:
         docker tag $IMAGE_NAME:$PREVIOUS_TAG $IMAGE_NAME:$NEW_VERSIONED_TAG
         docker push $IMAGE_NAME:$NEW_VERSIONED_TAG
       fi
-
 
 push_images:
   stage: push
