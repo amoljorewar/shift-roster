@@ -70,7 +70,13 @@ tag_previous_image:
     DOCKER_TLS_CERTDIR: ""
     DOCKER_HOST: "tcp://docker:2375"
   script:
+    # Ensure variables are available
+    - echo "DOCKER_USERNAME: $DOCKER_USERNAME"
+    - echo "DOCKER_PASSWORD: $DOCKER_PASSWORD"
+    
+    # Perform Docker login with username and password
     - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+    
     - PREVIOUS_TAG=$(cat .previous_tag)
     - NEW_VERSIONED_TAG=$(cat .new_versioned_tag)
     - if [[ -n "$PREVIOUS_TAG" && "$PREVIOUS_TAG" != "null" ]]; then
@@ -79,6 +85,7 @@ tag_previous_image:
         docker tag $IMAGE_NAME:$PREVIOUS_TAG $IMAGE_NAME:$NEW_VERSIONED_TAG;
         docker push $IMAGE_NAME:$NEW_VERSIONED_TAG;
       fi
+
 
 
 
