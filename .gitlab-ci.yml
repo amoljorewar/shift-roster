@@ -72,16 +72,16 @@ tag_previous_image:
   script:
     # Add this to verify Docker info and troubleshoot login
     - docker info  # Check Docker connection
-    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin || { echo 'Login failed'; exit 1; }
     - |
-     PREVIOUS_TAG=$(cat .previous_tag)
-     NEW_VERSIONED_TAG=$(cat .new_versioned_tag)
-     if [[ -n "$PREVIOUS_TAG" && "$PREVIOUS_TAG" != "null" ]]; then
-       echo "Re-tagging $IMAGE_NAME:$PREVIOUS_TAG to $IMAGE_NAME:$NEW_VERSIONED_TAG"
-       docker pull $IMAGE_NAME:$PREVIOUS_TAG
-       docker tag $IMAGE_NAME:$PREVIOUS_TAG $IMAGE_NAME:$NEW_VERSIONED_TAG
-       docker push $IMAGE_NAME:$NEW_VERSIONED_TAG
-     fi
+      PREVIOUS_TAG=$(cat .previous_tag)
+      NEW_VERSIONED_TAG=$(cat .new_versioned_tag)
+      if [[ -n "$PREVIOUS_TAG" && "$PREVIOUS_TAG" != "null" ]]; then
+        echo "Re-tagging $IMAGE_NAME:$PREVIOUS_TAG to $IMAGE_NAME:$NEW_VERSIONED_TAG"
+        docker pull $IMAGE_NAME:$PREVIOUS_TAG
+        docker tag $IMAGE_NAME:$PREVIOUS_TAG $IMAGE_NAME:$NEW_VERSIONED_TAG
+        docker push $IMAGE_NAME:$NEW_VERSIONED_TAG
+      fi
 
 
 push_images:
