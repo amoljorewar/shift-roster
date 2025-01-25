@@ -21,7 +21,7 @@ determine_tags:
   script:
     - >
       LATEST_TAG=$(curl -s -u "$DOCKER_HUB_USERNAME:$DOCKER_HUB_PASSWORD" https://hub.docker.com/v2/repositories/$IMAGE_NAME/tags/?page_size=1 | jq -r '.results[0].name')
-    #- echo "Latest tag found: " ${LATEST_TAG}
+    - echo "Latest tag found."
     - >
       if [[ $LATEST_TAG =~ ^v([0-9]+)\.([0-9]+)$ ]]; then
         MAJOR=${BASH_REMATCH[1]}
@@ -31,20 +31,33 @@ determine_tags:
         echo "No valid tag found, defaulting to v1.0"
         NEW_TAG="v1.0"
       fi
-    #- echo "New tag for previous image: $NEW_TAG"
+    - echo "New tag for previous image."
     - echo $LATEST_TAG > .previous_tag
     - echo $NEW_TAG > .new_versioned_tag
     - echo "latest" > .latest_tag
+  artifacts:
+    paths:
+      - .latest_tag
+      - .previous_tag
+      - .new_versioned_tag
 
 build_image:
   stage: build
+  dependencies:
+    - determine_tags
   script:
+    - cat .latest_tag
     - LATEST_TAG=$(cat .latest_tag)
-    #- echo "Building Docker image with tag: $IMAGE_NAME:$LATEST_TAG"
+    - echo "Building Docker image with tag."
     - docker build -t $IMAGE_NAME:$LATEST_TAG .
+  artifacts:
+    paths:
+      - .latest_tag
 
 tag_previous_image:
   stage: tag
+  dependencies:
+    - determine_tags
   script:
     - PREVIOUS_TAG=$(cat .previous_tag)
     - NEW_VERSIONED_TAG=$(cat .new_versioned_tag)
@@ -56,13 +69,20 @@ tag_previous_image:
       else
         echo "No valid previous tag found, skipping re-tagging."
       fi
+  artifacts:
+    paths:
+      - .new_versioned_tag
 
 push_images:
   stage: push
+  dependencies:
+    - determine_tags
+    - build_image
+    - tag_previous_image
   script:
     - LATEST_TAG=$(cat .latest_tag)
     - NEW_VERSIONED_TAG=$(cat .new_versioned_tag)
-    #- echo "Pushing image with tag: $IMAGE_NAME:$LATEST_TAG"
+    - echo "Pushing image with tag."
     - docker push $IMAGE_NAME:$LATEST_TAG
     - >
       if [[ -n "$NEW_VERSIONED_TAG" ]]; then
