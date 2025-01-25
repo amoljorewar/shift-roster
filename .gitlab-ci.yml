@@ -6,11 +6,11 @@ stages:
 
 variables:
   IMAGE_NAME: "amoljorewar/shift-roster-app"
-  DOCKER_TLS_CERTDIR: "" # Disable TLS for Docker-in-Docker
+  DOCKER_TLS_CERTDIR: ""  # Disable TLS for Docker-in-Docker
   DOCKER_HOST: "tcp://docker:2375"
 
 services:
-  - docker:dind # Enable Docker-in-Docker for building and pushing images
+  - docker:dind  # Enable Docker-in-Docker for building and pushing images
 
 before_script:
   # Ensure jq is installed (shared runners may not have it pre-installed)
@@ -19,11 +19,10 @@ before_script:
 determine_tags:
   stage: determine
   script:
-    # Fetch the latest tag from Docker Hub
     - LATEST_TAG=$(curl -s -u "$DOCKER_HUB_USERNAME:$DOCKER_HUB_PASSWORD" https://hub.docker.com/v2/repositories/$IMAGE_NAME/tags/?page_size=1 | jq -r '.results[0].name')
     - echo "Latest tag found: $LATEST_TAG"
-    # Extract the version number and increment it
-    - if [[ $LATEST_TAG =~ ^v([0-9]+)\.([0-9]+)$ ]]; then
+    - |
+      if [[ $LATEST_TAG =~ ^v([0-9]+)\.([0-9]+)$ ]]; then
         MAJOR=${BASH_REMATCH[1]};
         MINOR=${BASH_REMATCH[2]};
         NEW_TAG="v$MAJOR.$((MINOR + 1))";
@@ -32,7 +31,6 @@ determine_tags:
         NEW_TAG="v1.0";
       fi
     - echo "New tag for previous image: $NEW_TAG"
-    # Save tags for later stages
     - echo $LATEST_TAG > .previous_tag
     - echo $NEW_TAG > .new_versioned_tag
     - echo "latest" > .latest_tag
@@ -49,7 +47,8 @@ tag_previous_image:
   script:
     - PREVIOUS_TAG=$(cat .previous_tag)
     - NEW_VERSIONED_TAG=$(cat .new_versioned_tag)
-    - if [[ -n "$PREVIOUS_TAG" && "$PREVIOUS_TAG" != "null" ]]; then
+    - |
+      if [[ -n "$PREVIOUS_TAG" && "$PREVIOUS_TAG" != "null" ]]; then
         echo "Re-tagging $IMAGE_NAME:$PREVIOUS_TAG to $IMAGE_NAME:$NEW_VERSIONED_TAG";
         docker pull $IMAGE_NAME:$PREVIOUS_TAG;
         docker tag $IMAGE_NAME:$PREVIOUS_TAG $IMAGE_NAME:$NEW_VERSIONED_TAG;
@@ -69,4 +68,3 @@ push_images:
         echo "Pushing versioned tag: $IMAGE_NAME:$NEW_VERSIONED_TAG"
         docker push $IMAGE_NAME:$NEW_VERSIONED_TAG
       fi
-
