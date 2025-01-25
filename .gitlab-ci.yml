@@ -70,12 +70,13 @@ tag_previous_image:
     DOCKER_TLS_CERTDIR: ""
     DOCKER_HOST: "tcp://docker:2375"
   script:
-    # Add this to verify Docker info and troubleshoot login
-    - docker info  # Check Docker connection
-    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin || { echo 'Login failed'; exit 1; }
+    # Use GitLab registry credentials for login
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" "$CI_REGISTRY" --password-stdin || { echo 'Login failed'; exit 1; }
+
+    # Re-tagging and pushing the image
+    - PREVIOUS_TAG=$(cat .previous_tag)
+    - NEW_VERSIONED_TAG=$(cat .new_versioned_tag)
     - |
-      PREVIOUS_TAG=$(cat .previous_tag)
-      NEW_VERSIONED_TAG=$(cat .new_versioned_tag)
       if [[ -n "$PREVIOUS_TAG" && "$PREVIOUS_TAG" != "null" ]]; then
         echo "Re-tagging $IMAGE_NAME:$PREVIOUS_TAG to $IMAGE_NAME:$NEW_VERSIONED_TAG"
         docker pull $IMAGE_NAME:$PREVIOUS_TAG
