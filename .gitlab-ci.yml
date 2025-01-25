@@ -62,14 +62,15 @@ build_image:
 
 
 tag_previous_image:
-  stage: tag
-  image: docker:20.10  # Use a Docker image with CLI installed
+  stage: deploy
+  image: docker:20.10
   services:
     - docker:dind
   variables:
-    DOCKER_TLS_CERTDIR: ""  # Disable Docker-in-Docker TLS
-    DOCKER_HOST: "tcp://docker:2375"  # Ensure Docker CLI communicates with the Docker daemon
+    DOCKER_TLS_CERTDIR: ""
+    DOCKER_HOST: "tcp://docker:2375"
   script:
+    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
     - PREVIOUS_TAG=$(cat .previous_tag)
     - NEW_VERSIONED_TAG=$(cat .new_versioned_tag)
     - if [[ -n "$PREVIOUS_TAG" && "$PREVIOUS_TAG" != "null" ]]; then
@@ -78,6 +79,7 @@ tag_previous_image:
         docker tag $IMAGE_NAME:$PREVIOUS_TAG $IMAGE_NAME:$NEW_VERSIONED_TAG;
         docker push $IMAGE_NAME:$NEW_VERSIONED_TAG;
       fi
+
 
 
 push_images:
