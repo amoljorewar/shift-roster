@@ -43,6 +43,12 @@ determine_tags:
 
 build_image:
   stage: build
+  image: docker:20.10  # Use an image with Docker CLI pre-installed
+  services:
+    - docker:dind
+  variables:
+    DOCKER_TLS_CERTDIR: ""  # Disable Docker-in-Docker TLS
+    DOCKER_HOST: "tcp://docker:2375"  # Ensure the CLI communicates with the Docker daemon
   dependencies:
     - determine_tags
   script:
@@ -53,6 +59,7 @@ build_image:
   artifacts:
     paths:
       - .latest_tag
+
 
 tag_previous_image:
   stage: tag
