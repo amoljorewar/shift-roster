@@ -62,23 +62,23 @@ build_image:
 
 
 tag_previous_image:
-  stage: tag
-  dependencies:
-    - determine_tags
+  stage: deploy
+  image: docker:20.10  # Use a Docker image with CLI installed
+  services:
+    - docker:dind
+  variables:
+    DOCKER_TLS_CERTDIR: ""  # Disable Docker-in-Docker TLS
+    DOCKER_HOST: "tcp://docker:2375"  # Ensure Docker CLI communicates with the Docker daemon
   script:
     - PREVIOUS_TAG=$(cat .previous_tag)
     - NEW_VERSIONED_TAG=$(cat .new_versioned_tag)
-    - >
-      if [[ -n "$PREVIOUS_TAG" && "$PREVIOUS_TAG" != "null" ]]; then
-        echo "Re-tagging $IMAGE_NAME:$PREVIOUS_TAG to $IMAGE_NAME:$NEW_VERSIONED_TAG"
-        docker pull $IMAGE_NAME:$PREVIOUS_TAG
-        docker tag $IMAGE_NAME:$PREVIOUS_TAG $IMAGE_NAME:$NEW_VERSIONED_TAG
-      else
-        echo "No valid previous tag found, skipping re-tagging."
+    - if [[ -n "$PREVIOUS_TAG" && "$PREVIOUS_TAG" != "null" ]]; then
+        echo "Re-tagging $IMAGE_NAME:$PREVIOUS_TAG to $IMAGE_NAME:$NEW_VERSIONED_TAG";
+        docker pull $IMAGE_NAME:$PREVIOUS_TAG;
+        docker tag $IMAGE_NAME:$PREVIOUS_TAG $IMAGE_NAME:$NEW_VERSIONED_TAG;
+        docker push $IMAGE_NAME:$NEW_VERSIONED_TAG;
       fi
-  artifacts:
-    paths:
-      - .new_versioned_tag
+
 
 push_images:
   stage: push
