@@ -71,8 +71,8 @@ tag_previous_image:
     DOCKER_HOST: "tcp://docker:2375"
   script:
     # Add this to verify Docker info and troubleshoot login
-    - docker info  # Check Docker connection
-    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin || { echo 'Login failed'; exit 1; }
+    #- docker info  # Check Docker connection
+    #- echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin || { echo 'Login failed'; exit 1; }
     - |
       PREVIOUS_TAG=$(cat .previous_tag)
       NEW_VERSIONED_TAG=$(cat .new_versioned_tag)
