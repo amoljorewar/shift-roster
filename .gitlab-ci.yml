@@ -70,23 +70,18 @@ tag_previous_image:
     DOCKER_TLS_CERTDIR: ""
     DOCKER_HOST: "tcp://docker:2375"
   script:
-    # Debugging to ensure that the environment variables are properly set and decrypted
-    - echo "DOCKER_USERNAME starts with:" 
-    - echo "${DOCKER_USERNAME:0:5}"  # Debug line
-    - echo "DOCKER_PASSWORD starts with:"
-    - echo "${DOCKER_PASSWORD:0:5}"  # Debug line
-
-    # Perform Docker login with username and password
+    # Add this to verify Docker info and troubleshoot login
+    - docker info  # Check Docker connection
     - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-    
-    - PREVIOUS_TAG=$(cat .previous_tag)
-    - NEW_VERSIONED_TAG=$(cat .new_versioned_tag)
-    - if [[ -n "$PREVIOUS_TAG" && "$PREVIOUS_TAG" != "null" ]]; then
-        echo "Re-tagging $IMAGE_NAME:$PREVIOUS_TAG to $IMAGE_NAME:$NEW_VERSIONED_TAG";
-        docker pull $IMAGE_NAME:$PREVIOUS_TAG;
-        docker tag $IMAGE_NAME:$PREVIOUS_TAG $IMAGE_NAME:$NEW_VERSIONED_TAG;
-        docker push $IMAGE_NAME:$NEW_VERSIONED_TAG;
-      fi
+    - |
+     PREVIOUS_TAG=$(cat .previous_tag)
+     NEW_VERSIONED_TAG=$(cat .new_versioned_tag)
+     if [[ -n "$PREVIOUS_TAG" && "$PREVIOUS_TAG" != "null" ]]; then
+       echo "Re-tagging $IMAGE_NAME:$PREVIOUS_TAG to $IMAGE_NAME:$NEW_VERSIONED_TAG"
+       docker pull $IMAGE_NAME:$PREVIOUS_TAG
+       docker tag $IMAGE_NAME:$PREVIOUS_TAG $IMAGE_NAME:$NEW_VERSIONED_TAG
+       docker push $IMAGE_NAME:$NEW_VERSIONED_TAG
+     fi
 
 
 push_images:
