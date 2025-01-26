@@ -21,11 +21,11 @@ determine_tags:
   script:
     # Install required tools
     - apk add --no-cache curl jq
-    # Fetch the latest tag
+    # Fetch the latest tag using stored GitLab credentials
     - >
-      LATEST_TAG=$(curl -s -u "$DOCKER_HUB_USERNAME:$DOCKER_HUB_PASSWORD" \
+      LATEST_TAG=$(curl -s -u "$CI_REGISTRY_USER:$CI_REGISTRY_PASSWORD" \
       https://hub.docker.com/v2/repositories/$IMAGE_NAME/tags/?page_size=1 | jq -r '.results[0].name')
-    - echo "Latest tag found:"
+    - echo "Latest tag found:""
     - echo "$LATEST_TAG"
     - >
       if [[ $LATEST_TAG =~ ^v([0-9]+)\.([0-9]+)$ ]]; then
@@ -36,7 +36,7 @@ determine_tags:
         echo "No valid tag found, defaulting to v1.0"
         NEW_TAG="v1.0"
       fi
-    - echo "New tag for previous image:"
+    - echo "New tag for the next image:"
     - echo "$NEW_TAG"
     - echo $LATEST_TAG > .previous_tag
     - echo $NEW_TAG > .new_versioned_tag
