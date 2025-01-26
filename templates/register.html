@@ -1,24 +1,45 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<h2>Register</h2>
-<form method="POST">
-    <div class="form-group">
-        <label>Username:</label>
-        <input type="text" name="username" class="form-control" required>
-    </div>
-    <div class="form-group">
-        <label>Password:</label>
-        <input type="password" name="password" class="form-control" required>
-    </div>
-    <div class="form-group">
-        <label>Role:</label>
-        <div class="form-check">
-            <input type="checkbox" name="role_admin" class="form-check-input">
-            <label class="form-check-label">Admin</label>
+    <div class="container my-5">
+        <h2 class="text-center text-primary font-weight-bold mb-4">Register</h2>
+
+        <!-- Flash message for success or errors -->
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="alert alert-info text-center" role="alert">
+                    {% for message in messages %}
+                        <p>{{ message }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <!-- Registration form -->
+        <form method="POST" class="bg-light p-4 rounded shadow-sm">
+            <div class="form-group mb-3">
+                <label for="username" class="form-label">Username</label>
+                <input type="text" name="username" class="form-control" id="username" placeholder="Enter username" required>
+            </div>
+
+            <div class="form-group mb-3">
+                <label for="password" class="form-label">Password</label>
+                <input type="password" name="password" class="form-control" id="password" placeholder="Enter password" required>
+            </div>
+
+            <div class="form-group mb-3">
+                <label class="form-label">Role</label>
+                <div class="form-check">
+                    <input type="checkbox" name="role_admin" class="form-check-input" id="role_admin" {% if request.form['role_admin'] %} checked {% endif %}>
+                    <label class="form-check-label" for="role_admin">Admin</label>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100 mt-3">Register</button>
+        </form>
+
+        <div class="text-center mt-4">
+            <p>Already have an account? <a href="{{ url_for('login') }}" class="text-primary">Login</a></p>
         </div>
     </div>
-    <button type="submit" class="btn btn-primary mt-3">Register</button>
-</form>
-<p>Already have an account? <a href="{{ url_for('login') }}">Login</a></p>
 {% endblock %}
