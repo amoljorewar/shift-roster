@@ -61,12 +61,13 @@ build_image:
     - docker:dind
   dependencies:
     - check_for_changes
-  rules:
-    - if: $SKIP_BUILD == "true"
-      when: never
-    - if: $SKIP_BUILD == "false"
-      when: on_success
   script:
+    - source skip_build.env
+    - |
+      if [[ "$SKIP_BUILD" == "true" ]]; then
+        echo "Skipping build stage as no changes were detected."
+        exit 0
+      fi
     - LATEST_TAG=$(cat .latest_tag)
     - echo "Building Docker image with tag $LATEST_TAG."
     - docker build -t $IMAGE_NAME:latest .
@@ -86,12 +87,13 @@ tag_previous_image:
   dependencies:
     - determine_tags
     - build_image
-  rules:
-    - if: $SKIP_BUILD == "true"
-      when: never
-    - if: $SKIP_BUILD == "false"
-      when: on_success
   script:
+    - source skip_build.env
+    - |
+      if [[ "$SKIP_BUILD" == "true" ]]; then
+        echo "Skipping tag stage as no changes were detected."
+        exit 0
+      fi
     - PREVIOUS_TAG=$(cat .new_versioned_tag)
     - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" "$DOCKER_REGISTRY" --password-stdin
     - echo "Re-tagging 'latest' to $PREVIOUS_TAG."
@@ -106,12 +108,13 @@ push_image:
     - docker:dind
   dependencies:
     - build_image
-  rules:
-    - if: $SKIP_BUILD == "true"
-      when: never
-    - if: $SKIP_BUILD == "false"
-      when: on_success
   script:
+    - source skip_build.env
+    - |
+      if [[ "$SKIP_BUILD" == "true" ]]; then
+        echo "Skipping push stage as no changes were detected."
+        exit 0
+      fi
     - echo "Loading Docker image from artifacts."
     - docker load < image.tar
     - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin
