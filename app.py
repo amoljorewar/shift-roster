@@ -48,9 +48,9 @@ def login():
         password = request.form['password']
         user = User.query.filter_by(username=username).first()
         if user and check_password_hash(user.password, password):
-            session['user_id'] = user.id
-            session['role'] = user.role  # Store user role in session
-            return redirect(url_for('index'))  # After successful login, redirect to index
+            session['user_id'] = user.id  # Set the user_id in the session
+            session['role'] = user.role  # Optionally, store the role too
+            return redirect(url_for('index'))  # Redirect to home page after successful login
         else:
             flash('Login failed. Check your username and password.')
     return render_template('login.html')
@@ -58,20 +58,38 @@ def login():
 @app.route('/logout')
 def logout():
     session.pop('user_id', None)
-    session.pop('role', None)  # Ensure the role is also cleared from the session
+    session.pop('role', None)  # Clear user role if necessary
     return redirect(url_for('login'))
+
+@app.route('/users')
+def users():
+    # Query all users from the database
+    users = User.query.all()
+
+    # Render the users.html template, passing the list of users
+    return render_template('users.html', users=users)
+
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
         username = request.form['username']
         password = generate_password_hash(request.form['password'])
-        role = 'admin' if 'role_admin' in request.form else 'employee'
+        
+        # Default role is 'employee'
+        role = 'employee'
+        
+        # Check if the current logged-in user is an admin and if they are trying to register as an admin
+        if session.get('role') == 'admin' and request.form.get('role_admin'):
+            # Allow admin role only if the logged-in user is an admin
+            role = 'admin'
 
+        # Check if user exists
         existing_user = User.query.filter_by(username=username).first()
         if existing_user:
             flash('Username already exists.')
         else:
+            # Create new user
             new_user = User(username=username, password=password, role=role)
             db.session.add(new_user)
             db.session.commit()
@@ -123,7 +141,6 @@ def delete_shift(id):
     flash('Shift deleted successfully!')
     return redirect(url_for('index'))
 
-# Show shift roster in calendar view
 @app.route('/calendar')
 def calendar_view():
     # Get current month and year
@@ -135,14 +152,34 @@ def calendar_view():
     # Get shifts for the current month
     shifts = Shift.query.filter(Shift.date.like(f'{year}-{month:02d}%')).all()
 
+    # Color mapping for shift types
+    shift_colors = {
+        'Morning': '#add8e6',  # Light Blue for Morning shifts
+        'Afternoon': '#f4a300',  # Orange for Afternoon shifts
+        'General': '#90ee90'  # Light Green for General shifts
+    }
+
     # Format shifts for FullCalendar
     calendar_events = []
     for shift in shifts:
         shift_date = datetime.strptime(shift.date, '%Y-%m-%d').date()
+
+        # Set shift start and end times based on the shift type
+        shift_start_time = SHIFT_TYPES[shift.shift_type]['start']
+        shift_end_time = SHIFT_TYPES[shift.shift_type]['end']
+
+        # Convert start and end times to datetime objects
+        start_time = datetime.strptime(f"{shift.date} {shift_start_time}", "%Y-%m-%d %I:%M %p")
+        end_time = datetime.strptime(f"{shift.date} {shift_end_time}", "%Y-%m-%d %I:%M %p")
+
+        # Determine the color based on the shift type
+        color = shift_colors.get(shift.shift_type, '#378006')  # Default color if not found
+
         calendar_events.append({
             'title': f"{shift.employee_name} - {shift.shift_type}",
-            'start': shift_date.strftime('%Y-%m-%d') + "T09:00:00",
-            'end': shift_date.strftime('%Y-%m-%d') + "T18:00:00"
+            'start': start_time.isoformat(),
+            'end': end_time.isoformat(),
+            'color': color  # Set the color for each event
         })
 
     return render_template('calendar.html', events=calendar_events, month_name=month_name, month=month, year=year)

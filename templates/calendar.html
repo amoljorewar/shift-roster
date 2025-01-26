@@ -21,6 +21,11 @@
                     left: 'prev,next today',
                     center: 'title',
                     right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                },
+                eventTimeFormat: { // Customize time format for display
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    meridiem: 'short'
                 }
             });
             calendar.render();
@@ -29,4 +34,3 @@
     <p><a href="{{ url_for('index') }}">Back to Roster</a></p>
 </body>
 </html>
-

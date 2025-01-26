@@ -11,6 +11,16 @@ body {
     margin-bottom: 20px;
 }
 
+/* Card style for login form */
+.card {
+    border-radius: 10px; /* Rounded corners */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Soft shadow */
+}
+
+.card-body {
+    padding: 2rem;
+}
+
 /* Navigation bar styling */
 nav {
     background-color: #007bff;
@@ -29,7 +39,7 @@ nav li {
 }
 
 nav a {
-    color: white;
+    color: rgb(248, 247, 247);
     text-decoration: none;
     font-weight: bold;
 }
@@ -51,18 +61,33 @@ nav a:hover {
 /* Form controls styling */
 .form-control {
     border-radius: 5px;
+    border: 1px solid #ccc; /* Subtle border */
+    padding: 10px;
+    font-size: 1rem;
 }
 
-/* Styling for the submit buttons */
+/* Button styling */
 button.btn {
     border-radius: 5px;
     padding: 10px 15px;
-    font-size: 1rem;
+    font-size: 1.1rem;
+    width: 100%; /* Make the button full-width */
 }
 
 /* Hover effect for buttons */
 button.btn:hover {
-    opacity: 0.8;
+    opacity: 0.9;
+    background-color: #0056b3;
+    border-color: #0056b3;
+}
+
+/* Styling links */
+a {
+    color: #007bff;
+}
+
+a:hover {
+    text-decoration: underline;
 }
 
 /* Table styling */
@@ -79,10 +104,16 @@ table th, table td {
 
 table th {
     background-color: #007bff;
-    color: white;
+    color: rgb(11, 11, 11);
 }
 
 table tbody tr:hover {
     background-color: #f1f1f1;
 }
 
+/* Responsive design for login form */
+@media (max-width: 768px) {
+    .card {
+        width: 100%;
+    }
+}
