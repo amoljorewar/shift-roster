@@ -13,27 +13,28 @@ services:
 
 determine_tags:
   stage: determine
-  image: docker:20.10  # Use an image with Docker CLI pre-installed
+  image: docker:20.10
   services:
     - docker:dind
   variables:
-    DOCKER_TLS_CERTDIR: ""  # Disable Docker-in-Docker TLS
+    DOCKER_TLS_CERTDIR: ""
   script:
-    # Install required tools
     - apk add --no-cache curl jq
-    # Fetch the latest tag using stored GitLab credentials
     - LATEST_TAG=$(curl -s -u "$CI_REGISTRY_USER:$CI_REGISTRY_PASSWORD" https://hub.docker.com/v2/repositories/$IMAGE_NAME/tags/?page_size=1 | jq -r '.results[0].name')
     - echo "Latest tag found:"
     - echo "$LATEST_TAG"
-    - >
-      if [[ $LATEST_TAG =~ ^v([0-9]+)\.([0-9]+)$ ]]; then
-        MAJOR=${BASH_REMATCH[1]}
-        MINOR=${BASH_REMATCH[2]}
-        NEW_TAG="v$MAJOR.$((MINOR + 1))"
-      else
-        echo "No valid tag found, defaulting to v1.0"
-        NEW_TAG="v1.0"
-      fi
+    - |
+      case "$LATEST_TAG" in
+        v*.*)
+          MAJOR=$(echo "$LATEST_TAG" | cut -d. -f1 | tr -d "v")
+          MINOR=$(echo "$LATEST_TAG" | cut -d. -f2)
+          NEW_TAG="v$MAJOR.$((MINOR + 1))"
+          ;;
+        *)
+          echo "No valid tag found, defaulting to v1.0"
+          NEW_TAG="v1.0"
+          ;;
+      esac
     - echo "New tag for the next image:"
     - echo "$NEW_TAG"
     - echo $LATEST_TAG > .previous_tag
