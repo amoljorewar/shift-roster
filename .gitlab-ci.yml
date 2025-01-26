@@ -87,25 +87,21 @@ tag_previous_image:
     paths:
       - .new_versioned_tag
 
-push_images:
+push_image:
   stage: push
-  image: docker:20.10-dind  # Ensure apt-get is available
+  image: docker:20.10-dind
   services:
     - docker:dind
-  dependencies:
-    - build_image
-    - tag_previous_image
+  variables:
+    DOCKER_TLS_CERTDIR: ""
   script:
     - echo "Loading Docker image from artifacts."
     - docker load < image.tar
     - LATEST_TAG=$(cat .latest_tag)
     - NEW_VERSIONED_TAG=$(cat .new_versioned_tag)
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin
     - echo "Pushing image with tag:"
     - echo "$LATEST_TAG"
+    - docker tag $IMAGE_NAME:latest $IMAGE_NAME:$LATEST_TAG
     - docker push $IMAGE_NAME:$LATEST_TAG
-    - |
-      if [[ -n "$NEW_VERSIONED_TAG" ]]; then
-        echo "Pushing versioned tag: $IMAGE_NAME:$NEW_VERSIONED_TAG."
-        docker tag $IMAGE_NAME:$LATEST_TAG $IMAGE_NAME:$NEW_VERSIONED_TAG
-        docker push $IMAGE_NAME:$NEW_VERSIONED_TAG
-      fi
+    - docker push $IMAGE_NAME:latest
