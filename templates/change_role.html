@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="container my-5">
+        <!-- Page Title -->
+        <h1 class="text-center mb-5 text-primary" style="font-family: 'Montserrat', sans-serif; font-weight: 600;">Change Role for {{ user.username }}</h1>
+
+        <!-- Flash message for success or errors -->
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="alert alert-info alert-dismissible fade show shadow-sm" role="alert">
+                    {% for message in messages %}
+                        <p class="mb-0">{{ message }}</p>
+                    {% endfor %}
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <!-- Role Change Form Card -->
+        <div class="card shadow-lg rounded-3 border-0" style="background: #f8f9fa;">
+            <div class="card-body p-5">
+                <form method="POST">
+                    <!-- Role Selection -->
+                    <div class="mb-4">
+                        <label for="role" class="form-label text-dark font-weight-bold">Select Role</label>
+                        <select name="role" id="role" class="form-select form-control-lg shadow-sm" required>
+                            <option value="admin" {% if user.role == 'admin' %} selected {% endif %}>Admin</option>
+                            <option value="employee" {% if user.role == 'employee' %} selected {% endif %}>Employee</option>
+                        </select>
+                    </div>
+
+                    <!-- Submit and Cancel buttons -->
+                    <div class="d-flex justify-content-center mt-4">
+                        <button type="submit" class="btn btn-success btn-lg px-5 py-3 shadow-sm hover-zoom w-100">Save Changes</button>
+                    </div>
+                    
+                    <div class="d-flex justify-content-center mt-2">
+                        <a href="{{ url_for('users') }}" class="btn btn-secondary btn-lg px-5 py-3 shadow-sm hover-zoom w-100">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Optional: Include Bootstrap JS for alert dismiss feature -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Custom Styles for Button Hover Effects -->
+    <style>
+        .hover-zoom:hover {
+            transform: scale(1.1);
+            transition: all 0.3s ease-in-out;
+        }
+
+        .card {
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            transition: box-shadow 0.3s ease-in-out;
+        }
+
+        .card:hover {
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Flash message enhancements */
+        .alert {
+            background-color: rgba(0, 123, 255, 0.1);
+            color: #0d6efd;
+            border-color: #0d6efd;
+            border-radius: 0.25rem;
+            font-weight: bold;
+        }
+
+        .alert-info p {
+            margin-bottom: 0;
+        }
+
+        /* Add padding and rounded corners for the form */
+        .form-select {
+            border-radius: 8px;
+            border: 1px solid #ced4da;
+        }
+
+        .btn {
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        .btn-lg {
+            font-size: 1.2rem;
+        }
+
+        /* Custom styling for input fields and buttons */
+        .btn-success {
+            background-color: #28a745;
+            border-color: #28a745;
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+            border-color: #6c757d;
+        }
+
+        /* Hover effect for buttons */
+        .btn-success:hover {
+            background-color: #218838;
+            border-color: #1e7e34;
+        }
+
+        .btn-secondary:hover {
+            background-color: #5a6268;
+            border-color: #545b62;
+        }
+
+        /* Responsive improvements */
+        @media (max-width: 768px) {
+            .card-body {
+                padding: 2rem;
+            }
+
+            .btn-lg {
+                width: 100%;
+                margin-top: 1rem;
+            }
+        }
+    </style>
+{% endblock %}

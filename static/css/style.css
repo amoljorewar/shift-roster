@@ -3,6 +3,8 @@ body {
     font-family: Arial, sans-serif;
     background-color: #f8f9fa;
     color: #343a40;
+    margin: 0;
+    padding: 0;
 }
 
 /* Container for the main content */
@@ -39,13 +41,24 @@ nav li {
 }
 
 nav a {
-    color: rgb(248, 247, 247);
+    color: rgb(248, 247, 248);
     text-decoration: none;
     font-weight: bold;
 }
 
-nav a:hover {
+/* Navigation link hover effect */
+.nav-link {
+    transition: color 0.3s ease;
+}
+
+.nav-link:hover {
+    color: #faf8f8 !important;
     text-decoration: underline;
+}
+
+.nav-link.active {
+    font-weight: bold;
+    color: #f8f9fa !important; /* Active links appear white */
 }
 
 /* Flash message styling */
@@ -60,10 +73,16 @@ nav a:hover {
 
 /* Form controls styling */
 .form-control {
-    border-radius: 5px;
+    border-radius: 8px;
     border: 1px solid #ccc; /* Subtle border */
     padding: 10px;
     font-size: 1rem;
+    transition: border-color 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: #007bff;  /* Blue border on focus */
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
 }
 
 /* Button styling */
@@ -73,6 +92,52 @@ button.btn {
     font-size: 1.1rem;
     width: 100%; /* Make the button full-width */
 }
+
+/* Gradient Button */
+.btn-gradient {
+    background: linear-gradient(45deg, #6a11cb, #2575fc); /* Gradient from purple to blue */
+    color: white;
+    border: none;
+    border-radius: 50px;
+    transition: all 0.3s ease;
+}
+
+.btn-gradient:hover {
+    background: linear-gradient(45deg, #2575fc, #6a11cb); /* Reverse gradient on hover */
+    transform: scale(1.05); /* Slight scale effect */
+}
+
+/* Inputs and Select Fields */
+.form-control, .form-select {
+    border-radius: 10px;
+    border: 1px solid #ddd;
+    transition: border-color 0.3s ease-in-out;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #6a11cb; /* Highlight border on focus */
+    box-shadow: 0 0 5px rgba(102, 45, 145, 0.5); /* Soft glow on focus */
+}
+
+/* Card Shadow */
+.card {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+.card-body {
+    background-color: #f9f9f9;
+    border-radius: 10px;
+}
+
+.card {
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    transition: box-shadow 0.3s ease-in-out;
+}
+
+.card:hover {
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+
 
 /* Hover effect for buttons */
 button.btn:hover {
@@ -94,26 +159,72 @@ a:hover {
 table {
     width: 100%;
     margin-top: 20px;
+    border-collapse: separate; /* Allows rounded corners */
+    border-spacing: 0; /* Remove space between cells */
+    border-radius: 8px; /* Rounded corners for the table */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Soft shadow for the table */
 }
 
 table th, table td {
     text-align: center;
-    padding: 10px;
+    padding: 15px 20px; /* More spacious padding */
     border: 1px solid #ddd;
+    font-size: 1rem;
+    border-radius: 6px; /* Rounded corners for cells */
+    transition: all 0.3s ease; /* Smooth transitions for hover effects */
 }
 
+/* Table Header Styling */
 table th {
-    background-color: #007bff;
-    color: rgb(11, 11, 11);
+    background: linear-gradient(90deg, #007bff, #0056b3); /* Gradient background */
+    color: white;
+    font-weight: bold;
 }
 
+/* Row hover effect with subtle shadow */
 table tbody tr:hover {
-    background-color: #f1f1f1;
+    background-color: #f7f7f7; /* Lighter background on hover */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow effect */
 }
 
-/* Responsive design for login form */
+/* Action Buttons Styling */
+table .btn {
+    padding: 8px 15px;
+    font-size: 0.9rem;
+    border-radius: 20px; /* Rounded buttons */
+    transition: all 0.3s ease; /* Smooth transition for hover effect */
+}
+
+table .btn-warning {
+    background-color: #ffc107;
+    color: #333;
+    border: none;
+}
+
+table .btn-warning:hover {
+    background-color: #e0a800;
+    border-color: #d39e00;
+}
+
+table .btn-danger {
+    background-color: #dc3545;
+    color: #fff;
+    border: none;
+}
+
+table .btn-danger:hover {
+    background-color: #c82333;
+    border-color: #bd2130;
+}
+
+/* Responsive Design for Tables */
 @media (max-width: 768px) {
-    .card {
-        width: 100%;
+    table th, table td {
+        padding: 10px; /* Less padding on smaller screens */
+        font-size: 0.9rem;
+    }
+
+    table .btn {
+        padding: 6px 12px; /* Smaller buttons for small screens */
     }
 }

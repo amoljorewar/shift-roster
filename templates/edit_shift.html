@@ -1,25 +1,39 @@
 {% extends 'base.html' %}
 
 {% block content %}
-    <h1>Edit Shift</h1>
-    <form method="POST">
-        <div>
-            <label for="employee_name">Employee Name</label>
-            <input type="text" id="employee_name" name="employee_name" value="{{ shift.employee_name }}" required>
-        </div>
-        <div>
-            <label for="shift_type">Shift Type</label>
-            <select name="shift_type" id="shift_type" required>
-                {% for shift_type in shift_types %}
-                    <option value="{{ shift_type }}" {% if shift_type == shift.shift_type %} selected {% endif %}>{{ shift_type }}</option>
-                {% endfor %}
-            </select>
-        </div>
-        <div>
-            <label for="date">Date</label>
-            <input type="date" id="date" name="date" value="{{ shift.date }}" required>
-        </div>
-        <button type="submit">Save</button>
-    </form>
-{% endblock %}
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card shadow-lg border-0 rounded-4">
+                    <div class="card-body p-4">
+                        <h2 class="text-center mb-4 text-primary">Edit Shift</h2>
+                        <form method="POST">
+                            <div class="mb-3">
+                                <label for="employee_name" class="form-label">Employee Name</label>
+                                <input type="text" id="employee_name" name="employee_name" class="form-control form-control-lg" value="{{ shift.employee_name }}" required>
+                            </div>
 
+                            <div class="mb-3">
+                                <label for="shift_type" class="form-label">Shift Type</label>
+                                <select name="shift_type" id="shift_type" class="form-select form-select-lg" required>
+                                    {% for shift_type in shift_types %}
+                                        <option value="{{ shift_type }}" {% if shift_type == shift.shift_type %} selected {% endif %}>{{ shift_type }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="date" class="form-label">Date</label>
+                                <input type="date" id="date" name="date" class="form-control form-control-lg" value="{{ shift.date }}" required>
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-gradient btn-lg">Save Changes</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
