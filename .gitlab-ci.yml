@@ -11,53 +11,67 @@ variables:
 services:
   - docker:dind  # Enable Docker-in-Docker for building and pushing images
 
-
 determine_tags:
   stage: determine
   image: docker:20.10
   services:
     - docker:dind
-  variables:
-    DOCKER_TLS_CERTDIR: ""
   script:
     - apk add --no-cache curl jq
-    - LATEST_TAG=$(curl -s -u "$CI_REGISTRY_USER:$CI_REGISTRY_PASSWORD" https://hub.docker.com/v2/repositories/$IMAGE_NAME/tags/?page_size=1 | jq -r '.results[0].name')
-    - echo "Latest tag found:"
-    - echo "$LATEST_TAG"
+    - LATEST_TAG=$(curl -s -u "$CI_REGISTRY_USER:$CI_REGISTRY_PASSWORD" https://hub.docker.com/v2/repositories/$IMAGE_NAME/tags/?page_size=1 | jq -r '.results[] | select(.name=="latest") | .name')
+    - echo "Latest tag found:" $LATEST_TAG
     - |
-      case "$LATEST_TAG" in
-        v*.*)
-          MAJOR=$(echo "$LATEST_TAG" | cut -d. -f1 | tr -d "v")
-          MINOR=$(echo "$LATEST_TAG" | cut -d. -f2)
-          NEW_TAG="v$MAJOR.$((MINOR + 1))"
-          ;;
-        *)
-          echo "No valid tag found, defaulting to v1.0"
-          NEW_TAG="v1.0"
-          ;;
-      esac
-    - echo "New tag for the next image:"
-    - echo "$NEW_TAG"
-    - echo $LATEST_TAG > .previous_tag
+      if [[ $LATEST_TAG == "null" || -z "$LATEST_TAG" ]]; then
+        echo "No valid 'latest' tag found. Defaulting to v1.0."
+        NEW_TAG="v1.0"
+      else
+        MAJOR=$(echo "$LATEST_TAG" | cut -d. -f1 | tr -d "v")
+        MINOR=$(echo "$LATEST_TAG" | cut -d. -f2)
+        NEW_TAG="v$MAJOR.$((MINOR + 1))"
+      fi
+    - echo "New tag for the next image:" $NEW_TAG
     - echo $NEW_TAG > .new_versioned_tag
     - echo "latest" > .latest_tag
   artifacts:
     paths:
-      - .latest_tag
-      - .previous_tag
       - .new_versioned_tag
+      - .latest_tag
+
+check_for_changes:
+  stage: determine
+  image: alpine:latest
+  script:
+    - echo "Checking for changes in the application code..."
+    - |
+      if git diff --quiet HEAD^ HEAD ./src; then
+        echo "No changes detected in application code."
+        echo "SKIP_BUILD=true" > skip_build.env
+      else
+        echo "Changes detected in application code."
+        echo "SKIP_BUILD=false" > skip_build.env
+      fi
+  artifacts:
+    reports:
+      dotenv: skip_build.env
 
 build_image:
   stage: build
-  image: docker:20.10-dind  # Use a DIND image with apt-get for added flexibility
+  image: docker:20.10-dind
   services:
     - docker:dind
+  dependencies:
+    - check_for_changes
+  rules:
+    - if: $SKIP_BUILD == "true"
+      when: never
+    - if: $SKIP_BUILD == "false"
+      when: on_success
   script:
     - LATEST_TAG=$(cat .latest_tag)
     - echo "Building Docker image with tag $LATEST_TAG."
-    - docker build -t $IMAGE_NAME:$LATEST_TAG .
+    - docker build -t $IMAGE_NAME:latest .
     - echo "Saving Docker image as an artifact."
-    - docker save $IMAGE_NAME:$LATEST_TAG > image.tar
+    - docker save $IMAGE_NAME:latest > image.tar
   artifacts:
     paths:
       - image.tar
@@ -71,38 +85,35 @@ tag_previous_image:
     - docker:dind
   dependencies:
     - determine_tags
+    - build_image
+  rules:
+    - if: $SKIP_BUILD == "true"
+      when: never
+    - if: $SKIP_BUILD == "false"
+      when: on_success
   script:
-    - PREVIOUS_TAG=$(cat .previous_tag)
-    - NEW_VERSIONED_TAG=$(cat .new_versioned_tag)
+    - PREVIOUS_TAG=$(cat .new_versioned_tag)
     - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" "$DOCKER_REGISTRY" --password-stdin
-    - |
-      if [[ -n "$PREVIOUS_TAG" && "$PREVIOUS_TAG" != "null" ]]; then
-        echo "Re-tagging $IMAGE_NAME:$PREVIOUS_TAG to $IMAGE_NAME:$NEW_VERSIONED_TAG."
-        docker pull $IMAGE_NAME:$PREVIOUS_TAG
-        docker tag $IMAGE_NAME:$PREVIOUS_TAG $IMAGE_NAME:$NEW_VERSIONED_TAG
-        docker push $IMAGE_NAME:$NEW_VERSIONED_TAG
-      else
-        echo "No previous tag to re-tag."
-      fi
-  artifacts:
-    paths:
-      - .new_versioned_tag
+    - echo "Re-tagging 'latest' to $PREVIOUS_TAG."
+    - docker pull $IMAGE_NAME:latest
+    - docker tag $IMAGE_NAME:latest $IMAGE_NAME:$PREVIOUS_TAG
+    - docker push $IMAGE_NAME:$PREVIOUS_TAG
 
 push_image:
   stage: push
   image: docker:20.10-dind
   services:
     - docker:dind
-  variables:
-    DOCKER_TLS_CERTDIR: ""
+  dependencies:
+    - build_image
+  rules:
+    - if: $SKIP_BUILD == "true"
+      when: never
+    - if: $SKIP_BUILD == "false"
+      when: on_success
   script:
     - echo "Loading Docker image from artifacts."
     - docker load < image.tar
-    - LATEST_TAG=$(cat .latest_tag)
-    - NEW_VERSIONED_TAG=$(cat .new_versioned_tag)
     - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin
-    - echo "Pushing image with tag:"
-    - echo "$LATEST_TAG"
-    - docker tag $IMAGE_NAME:latest $IMAGE_NAME:$LATEST_TAG
-    - docker push $IMAGE_NAME:$LATEST_TAG
+    - echo "Pushing 'latest' tag for the new image."
     - docker push $IMAGE_NAME:latest
