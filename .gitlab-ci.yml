@@ -6,10 +6,10 @@ stages:
 
 variables:
   IMAGE_NAME: "amoljorewar/shift-roster-app"
-  DOCKER_TLS_CERTDIR: ""  # Disable TLS for Docker-in-Docker
+  DOCKER_TLS_CERTDIR: ""
 
 services:
-  - docker:dind  # Enable Docker-in-Docker for building and pushing images
+  - docker:dind
 
 determine_tags:
   stage: determine
@@ -18,18 +18,19 @@ determine_tags:
     - docker:dind
   script:
     - apk add --no-cache curl jq
-    - LATEST_TAG=$(curl -s -u "$CI_REGISTRY_USER:$CI_REGISTRY_PASSWORD" https://hub.docker.com/v2/repositories/$IMAGE_NAME/tags/?page_size=1 | jq -r '.results[] | select(.name=="latest") | .name')
-    - echo "Latest tag found:" $LATEST_TAG
+    - echo "Fetching the latest tags from Docker Hub..."
+    - LATEST_TAG=$(curl -s -u "$CI_REGISTRY_USER:$CI_REGISTRY_PASSWORD" https://hub.docker.com/v2/repositories/$IMAGE_NAME/tags/?page_size=10 | jq -r '.results[] | select(.name | test("^v[0-9]+\\.[0-9]+$")) | .name' | sort -rV | head -n 1)
+    - echo "Latest semantic version tag found: $LATEST_TAG"
     - |
-      if [[ $LATEST_TAG == "null" || -z "$LATEST_TAG" ]]; then
-        echo "No valid 'latest' tag found. Defaulting to v1.0."
+      if [[ -z "$LATEST_TAG" ]]; then
+        echo "No valid version tag found. Starting at v1.0."
         NEW_TAG="v1.0"
       else
         MAJOR=$(echo "$LATEST_TAG" | cut -d. -f1 | tr -d "v")
         MINOR=$(echo "$LATEST_TAG" | cut -d. -f2)
         NEW_TAG="v$MAJOR.$((MINOR + 1))"
       fi
-    - echo "New tag for the next image:" $NEW_TAG
+    - echo "New tag for the next image: $NEW_TAG"
     - echo $NEW_TAG > .new_versioned_tag
     - echo "latest" > .latest_tag
   artifacts:
@@ -52,7 +53,7 @@ check_for_changes:
       fi
   artifacts:
     reports:
-      dotenv: skip_build.env  # Pass skip_build.env as an artifact
+      dotenv: skip_build.env
     paths:
       - skip_build.env
 
@@ -62,10 +63,9 @@ build_image:
   services:
     - docker:dind
   dependencies:
-    - check_for_changes  # Depend on check_for_changes job
+    - check_for_changes
   script:
     - echo "Loading skip_build.env..."
-    - cat skip_build.env  # Debug step to confirm file presence
     - source skip_build.env
     - |
       if [[ "$SKIP_BUILD" == "true" ]]; then
