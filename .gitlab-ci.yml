@@ -13,21 +13,31 @@ services:
 
 determine_tags:
   stage: determine
-  image: docker:20.10  # Minimal image for tag calculation
+  image: docker:20.10  # Use an image with Docker CLI pre-installed
+  services:
+    - docker:dind
+  variables:
+    DOCKER_TLS_CERTDIR: ""  # Disable Docker-in-Docker TLS
   script:
+    # Install required tools
+    - apk add --no-cache curl jq
+    # Fetch the latest tag
     - >
-      LATEST_TAG=$(curl -s -u "$DOCKER_HUB_USERNAME:$DOCKER_HUB_PASSWORD" https://hub.docker.com/v2/repositories/$IMAGE_NAME/tags/?page_size=1 | jq -r '.results[0].name')
+      LATEST_TAG=$(curl -s -u "$DOCKER_HUB_USERNAME:$DOCKER_HUB_PASSWORD" \
+      https://hub.docker.com/v2/repositories/$IMAGE_NAME/tags/?page_size=1 | jq -r '.results[0].name')
     - echo "Latest tag found:"
-    - echo " $LATEST_TAG"
+    - echo "$LATEST_TAG"
     - >
       if [[ $LATEST_TAG =~ ^v([0-9]+)\.([0-9]+)$ ]]; then
         MAJOR=${BASH_REMATCH[1]}
         MINOR=${BASH_REMATCH[2]}
         NEW_TAG="v$MAJOR.$((MINOR + 1))"
       else
-        echo "No valid tag found, defaulting to v1.0."
+        echo "No valid tag found, defaulting to v1.0"
         NEW_TAG="v1.0"
       fi
+    - echo "New tag for previous image:"
+    - echo "$NEW_TAG"
     - echo $LATEST_TAG > .previous_tag
     - echo $NEW_TAG > .new_versioned_tag
     - echo "latest" > .latest_tag
