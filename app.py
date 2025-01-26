@@ -1,16 +1,20 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
+from flask import Flask, render_template, request, redirect, url_for, session, flash
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
-import os
-import calendar
+from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from datetime import datetime
 
+# Initialize the app and database
 app = Flask(__name__)
-app.secret_key = os.urandom(24)  # For session management
-
+app.secret_key = 'your_secret_key'  # Secret key for session management
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///shift_roster.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
+
+# Initialize the login manager
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
 
 # Define Shift Types
 SHIFT_TYPES = {
@@ -19,13 +23,17 @@ SHIFT_TYPES = {
     'General': {'start': '09:00 AM', 'end': '06:00 PM'}
 }
 
-# User and Shift models
-class User(db.Model):
+# User model with Flask-Login integration
+class User(db.Model, UserMixin):  # Inherit from UserMixin
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(120), nullable=False)
     role = db.Column(db.String(20), nullable=False, default='employee')  # Role for admin/employee
 
+    def get_id(self):
+        return str(self.id)  # Return the user id as a string
+
+# Shift model
 class Shift(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     employee_name = db.Column(db.String(120), nullable=False)
@@ -33,7 +41,12 @@ class Shift(db.Model):
     date = db.Column(db.String(120), nullable=False)
     shift_time = db.Column(db.String(50), nullable=False)
 
-# Routes
+# Routes and app logic
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))  # Load user by ID
+
 @app.route('/')
 def index():
     if 'user_id' not in session:
@@ -50,6 +63,7 @@ def login():
         if user and check_password_hash(user.password, password):
             session['user_id'] = user.id  # Set the user_id in the session
             session['role'] = user.role  # Optionally, store the role too
+            login_user(user)  # Login the user with Flask-Login
             return redirect(url_for('index'))  # Redirect to home page after successful login
         else:
             flash('Login failed. Check your username and password.')
@@ -59,16 +73,43 @@ def login():
 def logout():
     session.pop('user_id', None)
     session.pop('role', None)  # Clear user role if necessary
+    logout_user()  # Logout the user from Flask-Login
     return redirect(url_for('login'))
 
 @app.route('/users')
+@login_required
 def users():
+    if current_user.role != 'admin':
+        flash("You do not have permission to access this page.", "danger")
+        return redirect(url_for('index'))
+
     # Query all users from the database
     users = User.query.all()
 
     # Render the users.html template, passing the list of users
     return render_template('users.html', users=users)
 
+@app.route('/change_role/<int:user_id>', methods=['GET', 'POST'])
+@login_required
+def change_role(user_id):
+    if current_user.role != 'admin':
+        flash("You do not have permission to perform this action.", "danger")
+        return redirect(url_for('index'))
+
+    user = User.query.get(user_id)
+    if not user:
+        flash("User not found.", "danger")
+        return redirect(url_for('index'))
+
+    if request.method == 'POST':
+        new_role = request.form['role']
+        if new_role in ['admin', 'employee']:  # Allow only valid roles
+            user.role = new_role
+            db.session.commit()
+            flash("User role updated successfully.", "success")
+            return redirect(url_for('users'))  # Redirect to the user list page
+
+    return render_template('change_role.html', user=user)
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -99,6 +140,7 @@ def register():
     return render_template('register.html')
 
 @app.route('/add_shift', methods=['GET', 'POST'])
+@login_required
 def add_shift():
     if request.method == 'POST':
         employee_name = request.form['employee_name']
@@ -119,6 +161,7 @@ def add_shift():
     return render_template('add_shift.html', shift_types=SHIFT_TYPES.keys())
 
 @app.route('/edit_shift/<int:id>', methods=['GET', 'POST'])
+@login_required
 def edit_shift(id):
     shift = Shift.query.get(id)
     if request.method == 'POST':
@@ -134,6 +177,7 @@ def edit_shift(id):
     return render_template('edit_shift.html', shift=shift, shift_types=SHIFT_TYPES.keys())
 
 @app.route('/delete_shift/<int:id>')
+@login_required
 def delete_shift(id):
     shift = Shift.query.get(id)
     db.session.delete(shift)
@@ -142,6 +186,7 @@ def delete_shift(id):
     return redirect(url_for('index'))
 
 @app.route('/calendar')
+@login_required
 def calendar_view():
     # Get current month and year
     current_date = datetime.now()
@@ -191,4 +236,3 @@ def create_tables():
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)  # Ensure Flask is listening on all IPs
-

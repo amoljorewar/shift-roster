@@ -13,21 +13,35 @@
 
     <!-- FullCalendar CSS (optional) -->
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@3.2.0/dist/fullcalendar.min.css" rel="stylesheet">
-
 </head>
 <body>
+
     <!-- Display Navigation Links Only if User is Logged In -->
     {% if session.get('user_id') %}
-        <nav class="navbar navbar-expand-lg navbar-light bg-light">
-            <ul class="navbar-nav">
-                <li class="nav-item"><a class="nav-link" href="{{ url_for('index') }}">Home</a></li>
-                <li class="nav-item"><a class="nav-link" href="{{ url_for('add_shift') }}">Add Shift</a></li>
-                <li class="nav-item"><a class="nav-link" href="{{ url_for('calendar_view') }}">Calendar</a></li>
-                <li class="nav-item"><a class="nav-link" href="{{ url_for('logout') }}">Logout</a></li>
-                <li class="nav-item"><a class="nav-link" href="{{ url_for('users') }}">View All Users</a></li>
-            </ul>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-gradient">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="{{ url_for('index') }}">Shift Roster</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'calendar_view' %} active {% endif %}" href="{{ url_for('calendar_view') }}">Calendar</a>
+                        </li>
+                        <!-- Display 'View All Users' link only if the user is an admin -->
+                        {% if session['role'] == 'admin' %}
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.endpoint == 'users' %} active {% endif %}" href="{{ url_for('users') }}">View All Users</a>
+                            </li>
+                        {% endif %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.endpoint == 'logout' %} active {% endif %}" href="{{ url_for('logout') }}">Logout</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
         </nav>
-   
     {% endif %}
 
     <div class="container">
@@ -45,7 +59,7 @@
         <!-- Page-specific content will be injected here -->
         {% endblock %}
     </div>
-   
+
     <!-- Include necessary JS files for Bootstrap and FullCalendar -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@3.2.0/dist/fullcalendar.min.js"></script>
