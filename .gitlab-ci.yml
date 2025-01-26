@@ -31,7 +31,6 @@ determine_tags:
         echo "No valid tag found, defaulting to v1.0"
         NEW_TAG="v1.0"
       fi
-    - echo "New tag for previous image."
     - echo $LATEST_TAG > .previous_tag
     - echo $NEW_TAG > .new_versioned_tag
     - echo "latest" > .latest_tag
@@ -48,16 +47,17 @@ build_image:
     - docker:dind
   variables:
     DOCKER_TLS_CERTDIR: ""  # Disable Docker-in-Docker TLS
-    DOCKER_HOST: "tcp://docker:2375"  # Ensure the CLI communicates with the Docker daemon
   dependencies:
     - determine_tags
   script:
-    - cat .latest_tag
     - LATEST_TAG=$(cat .latest_tag)
-    - echo "Building Docker image with tag."
+    - echo "Building Docker image with tag $LATEST_TAG."
     - docker build -t $IMAGE_NAME:$LATEST_TAG .
+    - echo "Saving image to artifacts for later stages."
+    - docker save $IMAGE_NAME:$LATEST_TAG > image.tar
   artifacts:
     paths:
+      - image.tar
       - .latest_tag
 
 tag_previous_image:
@@ -65,38 +65,39 @@ tag_previous_image:
   image: docker:20.10
   services:
     - docker:dind
-  variables:
-    DOCKER_TLS_CERTDIR: ""
-    DOCKER_HOST: "tcp://docker:2375"
+  dependencies:
+    - determine_tags
   script:
-    # Use GitLab registry credentials for login
-    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" "$DOCKER_REGISTRY" --password-stdin || { echo 'Login failed'; exit 1; }
-
-    # Re-tagging and pushing the image
     - PREVIOUS_TAG=$(cat .previous_tag)
     - NEW_VERSIONED_TAG=$(cat .new_versioned_tag)
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" "$DOCKER_REGISTRY" --password-stdin
     - |
       if [[ -n "$PREVIOUS_TAG" && "$PREVIOUS_TAG" != "null" ]]; then
         echo "Re-tagging $IMAGE_NAME:$PREVIOUS_TAG to $IMAGE_NAME:$NEW_VERSIONED_TAG"
         docker pull $IMAGE_NAME:$PREVIOUS_TAG
         docker tag $IMAGE_NAME:$PREVIOUS_TAG $IMAGE_NAME:$NEW_VERSIONED_TAG
         docker push $IMAGE_NAME:$NEW_VERSIONED_TAG
+      else
+        echo "No previous tag to re-tag."
       fi
 
 push_images:
   stage: push
-  image: docker:20.10  # Make sure the Docker CLI is available in this stage
+  image: docker:20.10  # Ensure the Docker CLI is available
+  services:
+    - docker:dind
   dependencies:
-    - determine_tags
     - build_image
-    - tag_previous_image
   script:
+    - echo "Loading Docker image from artifacts."
+    - docker load < image.tar
     - LATEST_TAG=$(cat .latest_tag)
     - NEW_VERSIONED_TAG=$(cat .new_versioned_tag)
-    - echo "Pushing image with tag."
+    - echo "Pushing image with tag:"
+    - echo "$LATEST_TAG"
     - docker push $IMAGE_NAME:$LATEST_TAG
-    - >
+    - |
       if [[ -n "$NEW_VERSIONED_TAG" ]]; then
-        echo "Pushing versioned tag: $IMAGE_NAME:$NEW_VERSIONED_TAG"
+        echo "Pushing versioned tag: $IMAGE_NAME:$NEW_VERSIONED_TAG."
         docker push $IMAGE_NAME:$NEW_VERSIONED_TAG
       fi
