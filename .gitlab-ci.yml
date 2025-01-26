@@ -17,8 +17,8 @@ pull_code:
   image: alpine:latest  # Using a lightweight alpine image for pulling code
   script:
     - apk add --no-cache git  # Install git
-    - git clone https://github.com/username/repository.git  # Replace with your GitHub repo URL
-    - cd repository
+    - git clone https://github.com/amoljorewar/shift-roster.git  # Replace with your GitHub repo URL
+    - cd shift-roster
     - git pull origin main  # Replace 'main' with the branch you want to pull
     - echo "Code pulled from GitHub."
 
