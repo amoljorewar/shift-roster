@@ -7,28 +7,25 @@ stages:
 variables:
   IMAGE_NAME: "amoljorewar/shift-roster-app"
   DOCKER_TLS_CERTDIR: ""  # Disable TLS for Docker-in-Docker
-  DOCKER_HOST: "tcp://docker:2375"
 
 services:
   - docker:dind  # Enable Docker-in-Docker for building and pushing images
 
-before_script:
-  # Ensure jq is installed (shared runners may not have it pre-installed)
-  - apt-get update && apt-get install -y jq || echo "jq is already installed"
-
 determine_tags:
   stage: determine
+  image: docker:20.10  # Minimal image for tag calculation
   script:
     - >
       LATEST_TAG=$(curl -s -u "$DOCKER_HUB_USERNAME:$DOCKER_HUB_PASSWORD" https://hub.docker.com/v2/repositories/$IMAGE_NAME/tags/?page_size=1 | jq -r '.results[0].name')
-    - echo "Latest tag found."
+    - echo "Latest tag found:"
+    - echo " $LATEST_TAG"
     - >
       if [[ $LATEST_TAG =~ ^v([0-9]+)\.([0-9]+)$ ]]; then
         MAJOR=${BASH_REMATCH[1]}
         MINOR=${BASH_REMATCH[2]}
         NEW_TAG="v$MAJOR.$((MINOR + 1))"
       else
-        echo "No valid tag found, defaulting to v1.0"
+        echo "No valid tag found, defaulting to v1.0."
         NEW_TAG="v1.0"
       fi
     - echo $LATEST_TAG > .previous_tag
@@ -42,23 +39,20 @@ determine_tags:
 
 build_image:
   stage: build
-  image: docker:20.10  # Use an image with Docker CLI pre-installed
+  image: docker:20.10-dind  # Use a DIND image with apt-get for added flexibility
   services:
     - docker:dind
-  variables:
-    DOCKER_TLS_CERTDIR: ""  # Disable Docker-in-Docker TLS
-  dependencies:
-    - determine_tags
   script:
     - LATEST_TAG=$(cat .latest_tag)
     - echo "Building Docker image with tag $LATEST_TAG."
     - docker build -t $IMAGE_NAME:$LATEST_TAG .
-    - echo "Saving image to artifacts for later stages."
+    - echo "Saving Docker image as an artifact."
     - docker save $IMAGE_NAME:$LATEST_TAG > image.tar
   artifacts:
     paths:
       - image.tar
       - .latest_tag
+      - .new_versioned_tag
 
 tag_previous_image:
   stage: tag
@@ -73,21 +67,25 @@ tag_previous_image:
     - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" "$DOCKER_REGISTRY" --password-stdin
     - |
       if [[ -n "$PREVIOUS_TAG" && "$PREVIOUS_TAG" != "null" ]]; then
-        echo "Re-tagging $IMAGE_NAME:$PREVIOUS_TAG to $IMAGE_NAME:$NEW_VERSIONED_TAG"
+        echo "Re-tagging $IMAGE_NAME:$PREVIOUS_TAG to $IMAGE_NAME:$NEW_VERSIONED_TAG."
         docker pull $IMAGE_NAME:$PREVIOUS_TAG
         docker tag $IMAGE_NAME:$PREVIOUS_TAG $IMAGE_NAME:$NEW_VERSIONED_TAG
         docker push $IMAGE_NAME:$NEW_VERSIONED_TAG
       else
         echo "No previous tag to re-tag."
       fi
+  artifacts:
+    paths:
+      - .new_versioned_tag
 
 push_images:
   stage: push
-  image: docker:20.10  # Ensure the Docker CLI is available
+  image: docker:20.10-dind  # Ensure apt-get is available
   services:
     - docker:dind
   dependencies:
     - build_image
+    - tag_previous_image
   script:
     - echo "Loading Docker image from artifacts."
     - docker load < image.tar
@@ -99,5 +97,6 @@ push_images:
     - |
       if [[ -n "$NEW_VERSIONED_TAG" ]]; then
         echo "Pushing versioned tag: $IMAGE_NAME:$NEW_VERSIONED_TAG."
+        docker tag $IMAGE_NAME:$LATEST_TAG $IMAGE_NAME:$NEW_VERSIONED_TAG
         docker push $IMAGE_NAME:$NEW_VERSIONED_TAG
       fi
