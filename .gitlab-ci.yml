@@ -22,10 +22,8 @@ determine_tags:
     # Install required tools
     - apk add --no-cache curl jq
     # Fetch the latest tag using stored GitLab credentials
-    - >
-      LATEST_TAG=$(curl -s -u "$CI_REGISTRY_USER:$CI_REGISTRY_PASSWORD" \
-      https://hub.docker.com/v2/repositories/$IMAGE_NAME/tags/?page_size=1 | jq -r '.results[0].name')
-    - echo "Latest tag found:""
+    - LATEST_TAG=$(curl -s -u "$CI_REGISTRY_USER:$CI_REGISTRY_PASSWORD" https://hub.docker.com/v2/repositories/$IMAGE_NAME/tags/?page_size=1 | jq -r '.results[0].name')
+    - echo "Latest tag found:"
     - echo "$LATEST_TAG"
     - >
       if [[ $LATEST_TAG =~ ^v([0-9]+)\.([0-9]+)$ ]]; then
