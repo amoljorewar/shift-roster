@@ -21,6 +21,13 @@ pull_code:
     - cd shift-roster
     - git pull origin main  # Replace 'main' with the branch you want to pull
     - echo "Code pulled from GitHub."
+    # Add the steps to commit the changes back to GitLab
+    - git config --global user.email "amoljorewar@gmail.com"  # Set your Git email
+    - git config --global user.name "AmolJorewar"  # Set your Git name
+    - git add .  # Stage the pulled changes
+    - git commit -m "Sync latest changes from GitHub"  # Commit the changes
+    - git push origin main  # Push the changes back to GitLab
+    - echo "Code synchronized from GitHub to GitLab."
 
 determine_tags:
   stage: determine
