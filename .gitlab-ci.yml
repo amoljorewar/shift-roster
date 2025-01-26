@@ -52,7 +52,9 @@ check_for_changes:
       fi
   artifacts:
     reports:
-      dotenv: skip_build.env
+      dotenv: skip_build.env  # Pass skip_build.env as an artifact
+    paths:
+      - skip_build.env
 
 build_image:
   stage: build
@@ -60,18 +62,18 @@ build_image:
   services:
     - docker:dind
   dependencies:
-    - check_for_changes
+    - check_for_changes  # Depend on check_for_changes job
   script:
+    - echo "Loading skip_build.env..."
+    - cat skip_build.env  # Debug step to confirm file presence
     - source skip_build.env
     - |
       if [[ "$SKIP_BUILD" == "true" ]]; then
         echo "Skipping build stage as no changes were detected."
         exit 0
       fi
-    - LATEST_TAG=$(cat .latest_tag)
-    - echo "Building Docker image with tag $LATEST_TAG."
+    - echo "Proceeding with the build stage."
     - docker build -t $IMAGE_NAME:latest .
-    - echo "Saving Docker image as an artifact."
     - docker save $IMAGE_NAME:latest > image.tar
   artifacts:
     paths:
@@ -88,12 +90,6 @@ tag_previous_image:
     - determine_tags
     - build_image
   script:
-    - source skip_build.env
-    - |
-      if [[ "$SKIP_BUILD" == "true" ]]; then
-        echo "Skipping tag stage as no changes were detected."
-        exit 0
-      fi
     - PREVIOUS_TAG=$(cat .new_versioned_tag)
     - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" "$DOCKER_REGISTRY" --password-stdin
     - echo "Re-tagging 'latest' to $PREVIOUS_TAG."
@@ -109,12 +105,6 @@ push_image:
   dependencies:
     - build_image
   script:
-    - source skip_build.env
-    - |
-      if [[ "$SKIP_BUILD" == "true" ]]; then
-        echo "Skipping push stage as no changes were detected."
-        exit 0
-      fi
     - echo "Loading Docker image from artifacts."
     - docker load < image.tar
     - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin
