@@ -20,7 +20,8 @@ determine_tags:
     - apk add --no-cache curl jq
     - echo "Fetching the latest tags from Docker Hub..."
     - LATEST_TAG=$(curl -s -u "$CI_REGISTRY_USER:$CI_REGISTRY_PASSWORD" https://hub.docker.com/v2/repositories/$IMAGE_NAME/tags/?page_size=10 | jq -r '.results[] | select(.name | test("^v[0-9]+\\.[0-9]+$")) | .name' | sort -rV | head -n 1)
-    - echo "Latest semantic version tag found: $LATEST_TAG"
+    - echo "Latest semantic version tag found:"
+    - echo "$LATEST_TAG"
     - |
       if [[ -z "$LATEST_TAG" ]]; then
         echo "No valid version tag found. Starting at v1.0."
@@ -30,7 +31,8 @@ determine_tags:
         MINOR=$(echo "$LATEST_TAG" | cut -d. -f2)
         NEW_TAG="v$MAJOR.$((MINOR + 1))"
       fi
-    - echo "New tag for the next image: $NEW_TAG"
+    - echo "New tag for the next image:"
+    - echo "$NEW_TAG"
     - echo $NEW_TAG > .new_versioned_tag
     - echo "latest" > .latest_tag
   artifacts:
