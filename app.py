@@ -121,8 +121,8 @@ def register():
         role = 'employee'
         
         # Check if the current logged-in user is an admin and if they are trying to register as an admin
-        if session.get('role') == 'admin' and request.form.get('role_admin'):
-            # Allow admin role only if the logged-in user is an admin
+        if 'role_admin' in request.form:  # Check if the admin checkbox was checked
+            # Allow admin role if the logged-in user is an admin
             role = 'admin'
 
         # Check if user exists
